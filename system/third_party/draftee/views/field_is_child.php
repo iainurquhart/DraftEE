@@ -11,7 +11,7 @@ $(document).ready(function() {
 
 
 <?php // echo "<pre>"; print_r($parent_data); echo "</pre>";?>
-<?php echo "<pre>"; print_r($this_data); echo "</pre>";?>
+<?php // echo "<pre>"; print_r($this_data); echo "</pre>";?>
 
 
 
@@ -19,10 +19,12 @@ $(document).ready(function() {
 
 	<div class="draftee_is_draft">
 		<h3>This is a draft of <a href="<?=$publish_base?>entry_id=<?=$parent_id?>&amp;channel_id=<?=$channel_id?>"><?=$parent_data['title']?></a></h3>
-		<span class="draftee_publish_draft draftee_button">Publish Draft</span>
 		<?php if($date_mismatch){ ?>
-			<em class="draftee_warning">The parent has been edited since this draft was created!</em>
+			<p class="draftee_warning"><strong>Note:</strong> The parent has been edited since this draft was created<br />Publishing this draft will overwrite any changes made.</p>
 		<?php } ?>
+		
+		<span class="draftee_publish_draft draftee_button">Publish Draft</span>
+		
 		
 	</div>
 	

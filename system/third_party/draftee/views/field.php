@@ -53,21 +53,29 @@ $(document).ready(function() {
 		// do we have any drafts of this entry
 		if(count($drafts) > 0)
 		{
-			$r = '<ul id="draftee_draft_list">';
+			$r = "<h3>Drafts for this entry</h3>";
+			$r .= "<table id='draftee_draft_list' cellspacing='0'>";
+			$r .= "<tr><th>Title</th><th>Last Updated</th><th>Created By</tr>";
 			
 			foreach($drafts as $draft)
 			{
-				$r .= '<li>draft info/options will go here</li>';
+				$r .= "<tr>";
+				$r .= "<td>".$draft['title']."</td>";
+				$r .= "<td>".$draft['edit_date']."</td>";
+				$r .= "<td>".$draft['author_id']."</td>";
+				$r .= "</tr>";
 			}
 			
-			$r .= '</ul>';
+			$r .= "</table>";
 			echo $r;
 		}
 		elseif(!$parent_id)
 		{
 			echo "<ul id='draftee_draft_list'><li>No drafts exist for this entry.</li></ul>\n";
-			echo '<span class="draftee_create_draft draftee_button">Create Draft</span>';
+			
 		}
+		
+		echo '<span class="draftee_create_draft draftee_button">Create a new draft</span>';
 	
 	?>
 

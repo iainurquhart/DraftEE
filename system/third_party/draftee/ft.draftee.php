@@ -46,6 +46,8 @@
 			
 			// set this just incase some fool adds several of these fields
 			$this->EE->session->cache[$this->settings['field_id']]['displayed'] = TRUE;
+			
+			$this->EE->load->model('channel_entries_model');
 
 			// set some vars
 			$vars['theme_base'] = $this->theme_base;
@@ -54,15 +56,10 @@
 			$vars['parent_id'] = '';
 			$vars['date_mismatch'] = '';
 			
-			// will hold an array of drafts for the current entry
-			// @todo
-			$vars['drafts'] = array();
-			
 			// is this entry a draft of another entry...
 			$query = $this->EE->db->get_where('draftee_drafts', array('draft_id' => $vars['entry_id']));
 			if ($query->num_rows() > 0)
 			{
-				$this->EE->load->model('channel_entries_model');
 				
 				foreach ($query->result() as $row)
 				{
@@ -82,11 +79,24 @@
 				}
 
 				return $this->EE->load->view('field_is_child', $vars, TRUE);
-				
 			}
-
 			
+			// so it's not a draft then
+			// Do we have any drafts for this entry? 
 			
+			$vars['drafts'] = array();
+			$query = $this->EE->db->get_where('draftee_drafts', array('parent_id' => $vars['entry_id']));
+			if ($query->num_rows() > 0)
+			{
+				foreach ($query->result() as $draft)
+				{
+					$entry_query = $this->EE->channel_entries_model->get_entry($draft->draft_id, $vars['channel_id']);
+					if(count($entry_query->row_array()) > 0)
+					{
+						$vars['drafts'][] = $entry_query->row_array();
+					}
+				}
+			}
 			return $this->EE->load->view('field', $vars, TRUE);
 
 		}
