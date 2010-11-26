@@ -51,7 +51,7 @@ $(document).ready(function() {
 
 	<?php
 		// do we have any drafts of this entry
-		if(count($drafts))
+		if(count($drafts) > 0)
 		{
 			$r = '<ul id="draftee_draft_list">';
 			

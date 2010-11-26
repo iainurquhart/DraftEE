@@ -46,13 +46,13 @@
 			
 			// set this just incase some fool adds several of these fields
 			$this->EE->session->cache[$this->settings['field_id']]['displayed'] = TRUE;
-			
-			
+
 			// set some vars
 			$vars['theme_base'] = $this->theme_base;
 			$vars['ajax_base'] = $this->ajax_base.'create_draft';
 			$vars['publish_base'] = $this->publish_base;
 			$vars['parent_id'] = '';
+			$vars['date_mismatch'] = '';
 			
 			// will hold an array of drafts for the current entry
 			// @todo
@@ -62,11 +62,25 @@
 			$query = $this->EE->db->get_where('draftee_drafts', array('draft_id' => $vars['entry_id']));
 			if ($query->num_rows() > 0)
 			{
+				$this->EE->load->model('channel_entries_model');
+				
 				foreach ($query->result() as $row)
 				{
 					$vars['parent_id'] = $row->parent_id;
 				}
 				
+				$parent_query = $this->EE->channel_entries_model->get_entry($vars['parent_id'], $vars['channel_id']);
+				$vars['parent_data'] = $parent_query->row_array();
+				
+				$parent_query = $this->EE->channel_entries_model->get_entry($vars['entry_id'], $vars['channel_id']);
+				$vars['this_data'] = $parent_query->row_array();
+				
+				// has the parent entry been edited since the draft was created?
+				if($vars['parent_data']['edit_date'] > $vars['this_data']['edit_date'])
+				{
+					$vars['date_mismatch'] = TRUE;
+				}
+
 				return $this->EE->load->view('field_is_child', $vars, TRUE);
 				
 			}

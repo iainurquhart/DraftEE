@@ -93,6 +93,7 @@ class Draftee_mcp
 					$key_data = array(
 						'id' => NULL,
 		               	'parent_id' => $row->entry_id,
+		               	'parent_last_edit' => $row->edit_date,
 		               	'draft_id' => $resp['draft_entry_id'],
 		               	'pushed' => 0
 		            );

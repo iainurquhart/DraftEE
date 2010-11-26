@@ -53,6 +53,10 @@ class Draftee_upd {
 			            						'constraint' => '10', 
 			            						'unsigned' => TRUE),
 
+			            'parent_last_edit' 	 => array(	'type' => 'bigint', 
+			            						'constraint' => '14', 
+			            						'unsigned' => TRUE),
+
 			            'draft_id' 	 => array(	'type' => 'int', 
 			            						'constraint' => '10', 
 			            						'unsigned' => TRUE),
@@ -77,6 +81,8 @@ class Draftee_upd {
 	function uninstall() 
 	{ 				
 		
+		$this->EE->load->dbforge();
+		
 		$this->EE->db->select('module_id');
 		$query = $this->EE->db->get_where('modules', array('module_name' => $this->module_name));
 		
@@ -91,6 +97,8 @@ class Draftee_upd {
 		
 		$this->EE->db->where('class', $this->module_name.'_mcp');
 		$this->EE->db->delete('actions');
+
+		$this->EE->dbforge->drop_table('draftee_drafts');
 										
 		return TRUE;
 	}
