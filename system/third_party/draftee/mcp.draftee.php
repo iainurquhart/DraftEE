@@ -110,12 +110,99 @@ class Draftee_mcp
 			$resp['msg'] = 'Something messed up';
 			$this->EE->output->send_ajax_response($resp);
 		}
-		
-		
-		
+
 	}
 	
-	
+	function publish_draft()
+	{
+		
+		$entry_id 		= $this->EE->input->get('entry_id');
+		$channel_id 	= $this->EE->input->get('channel_id');
+		$parent_id 		= $this->EE->input->get('parent_id');
+		$close_drafts 	= $this->EE->input->get('close_drafts');
+		
+		if(!$entry_id || !$channel_id || !$parent_id)
+		{
+			$resp['msg'] = 'error';
+			$this->EE->output->send_ajax_response($resp);
+		}
+		
+		
+		$this->EE->db->select('*');
+		$this->EE->db->from('channel_titles');
+		$this->EE->db->where('channel_titles.entry_id', $entry_id);
+		$this->EE->db->join('channel_data', 'channel_titles.entry_id = channel_data.entry_id');
+		$query = $this->EE->db->get();
+
+		// right, have we got the info
+		if ($query->num_rows() > 0)
+		{
+		
+			// prep the api lib
+			$this->EE->load->library('api');
+			$this->EE->api->instantiate('channel_entries');
+		
+			foreach ($query->result() as $row)
+			{
+				$data = (array) $row;
+				
+				$data['title'] = str_replace('[DRAFT] ', '', $data['title']);
+				
+				// get rid of a bunch of stuff that is outside of draftee jurisdiction
+				unset($data['entry_id']);
+				unset($data['author_id']);
+				unset($data['status']);
+				unset($data['view_count_one']);
+				unset($data['view_count_two']);
+				unset($data['view_count_three']);
+				unset($data['view_count_four']);
+			    unset($data['dst_enabled']);
+			    unset($data['year']);
+			    unset($data['month']);
+			    unset($data['day']);
+			    unset($data['url_title']);
+			    unset($data['recent_comment_date']);
+			    unset($data['comment_total']);
+				unset($data['versioning_enabled']);
+ 
+				// print_r($data);
+				
+				$this->EE->api_channel_entries->update_entry($parent_id, $data);
+
+			}
+		}
+		
+		if($close_drafts)
+		{
+			$update_ids = array();
+			$this->EE->db->select('*');
+			$this->EE->db->from('draftee_drafts');
+			$this->EE->db->where('parent_id', $parent_id);
+			$query = $this->EE->db->get();
+			
+			if ($query->num_rows() > 0)
+			{
+				foreach ($query->result() as $row)
+				{
+					$update_ids[] = $row->draft_id;
+				}
+			}
+			
+			// print_r($update_ids);
+            
+            $data = array(
+               'status' => 'closed'
+            );
+            
+            $this->EE->db->where_in('entry_id', $update_ids);
+			$this->EE->db->update('channel_titles', $data); 
+			
+		}
+		
+		
+		$resp['msg'] = 'entry_updated';
+		$this->EE->output->send_ajax_response($resp);
+	}
 	
 
 	function index() 

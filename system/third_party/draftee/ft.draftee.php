@@ -37,12 +37,14 @@
 			
 			$vars['entry_id'] 	= $this->EE->input->get('entry_id');
 			$vars['channel_id'] = $this->EE->input->get('channel_id');
+			$vars['field_id'] = $this->field_id;
+			$vars['theme_base'] = $this->theme_base;
 			
 			// no entry id
 			// we just hide the whole field for now.
 			// @todo
 			if(!$vars['entry_id'] || isset($this->EE->session->cache[$this->settings['field_id']]['displayed']))
-				return '<style type="text/css">div#hold_field_'.$this->field_id.' {display: none;}</style>';
+				return $this->EE->load->view('field_is_new', $vars, TRUE);
 			
 			// set this just incase some fool adds several of these fields
 			$this->EE->session->cache[$this->settings['field_id']]['displayed'] = TRUE;
@@ -50,11 +52,20 @@
 			$this->EE->load->model('channel_entries_model');
 
 			// set some vars
-			$vars['theme_base'] = $this->theme_base;
-			$vars['ajax_base'] = $this->ajax_base.'create_draft';
+			
+			$vars['ajax_base'] = $this->ajax_base;
 			$vars['publish_base'] = $this->publish_base;
 			$vars['parent_id'] = '';
 			$vars['date_mismatch'] = '';
+			$date_fmt = ($this->EE->session->userdata('time_format') != '') ? $this->EE->session->userdata('time_format') : $this->EE->config->item('time_format');
+			if ($date_fmt == 'us')
+			{
+				$vars['date_format'] = '%m/%d/%y %h:%i %a';
+			}
+			else
+			{
+				$vars['date_format'] = '%Y-%m-%d %H:%i';
+			}
 			
 			// is this entry a draft of another entry...
 			$query = $this->EE->db->get_where('draftee_drafts', array('draft_id' => $vars['entry_id']));
@@ -73,11 +84,12 @@
 				$vars['this_data'] = $parent_query->row_array();
 				
 				// has the parent entry been edited since the draft was created?
-				if($vars['parent_data']['edit_date'] > $vars['this_data']['edit_date'])
+				if((isset($vars['parent_data']['edit_date']) && isset($vars['this_data']['edit_date'])) && $vars['parent_data']['edit_date'] > $vars['this_data']['edit_date'])
 				{
 					$vars['date_mismatch'] = TRUE;
 				}
-
+				
+				if(count($vars['parent_data']) > 0)
 				return $this->EE->load->view('field_is_child', $vars, TRUE);
 			}
 			
@@ -90,16 +102,48 @@
 			{
 				foreach ($query->result() as $draft)
 				{
-					$entry_query = $this->EE->channel_entries_model->get_entry($draft->draft_id, $vars['channel_id']);
-					if(count($entry_query->row_array()) > 0)
-					{
-						$vars['drafts'][] = $entry_query->row_array();
-					}
+					$vars['drafts'][] = $this->_get_draft_entry($draft->draft_id);
 				}
 			}
 			return $this->EE->load->view('field', $vars, TRUE);
 
 		}
+		
+		
+		
+		
+		
+		// returns an array with all data from
+		// exp_channel_data, exp_channel_titles and member data
+		// from an entry_id
+		private function _get_draft_entry($entry_id)
+		{
+			if(!$entry_id)
+				return false;
+			
+			$this->EE->db->select('*');
+			$this->EE->db->from('channel_titles');
+			$this->EE->db->where('channel_titles.entry_id', $entry_id);
+			$this->EE->db->where('channel_titles.status', 'Draft');
+			$this->EE->db->join('channel_data', 'channel_titles.entry_id = channel_data.entry_id');
+			$this->EE->db->join('members', 'channel_titles.author_id = members.member_id');
+			
+			$results = $this->EE->db->get();
+			
+			return $results->row_array();
+
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		public function replace_tag($data, $params = FALSE, $tagdata = FALSE)
