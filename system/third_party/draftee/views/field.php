@@ -29,7 +29,7 @@ $(document).ready(function() {
 	                    
 	                    if(msg == 'entry_created')
 	                    {
-	                    	$('ul#draftee_draft_list').fadeOut();
+	                    	$('ul#draftee_draft_list').slideUp();
 	                    	$('span.draftee_button').html('<a href="' + edit_url + '">Draft created! Click to edit</a>').addClass('bulkee_extended').removeClass('draftee_create_draft');
 	                    }	                    
 
