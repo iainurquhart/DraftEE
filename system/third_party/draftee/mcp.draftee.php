@@ -247,7 +247,7 @@ class Draftee_mcp
             {
                 $data = (array) $matrix;
                 unset($data['row_id']);
-                $data['entry_id'] = $draft_entry;
+                $data['entry_id'] = $original_entry;
                 $this->EE->db->insert('matrix_data', $data);
             }
         }
