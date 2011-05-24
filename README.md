@@ -19,4 +19,4 @@ Will cross that bridge if I ever get there...
 ### Fork
 Caveats: I don't have an indepth understanding of EE. Just started hacking workflow for 2 days due to an urgent request.
 * Added support for Matrix data type. Matrix data will be updated accordingly when publishing a draft.
-* Added a giant ugly hardcode hack for user permission (Editor vs Publisher group)
+* Added a giant ugly hardcode hack for user permission (Editor vs Publisher group) [ views/field_is_child.php - define constant function @ line 2]
