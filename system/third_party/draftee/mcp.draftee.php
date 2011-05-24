@@ -100,7 +100,7 @@ class Draftee_mcp
 		            $this->EE->db->insert('draftee_drafts', $key_data);
 
                     // Matrix data support
-                    // Duplicate another set of matrix data for the draft
+                    // Duplicate another set of matrix data when creating a draft
                     $this->EE->db->select('*');
                     $this->EE->db->from('matrix_data');
                     $this->EE->db->where('entry_id', $entry_id);
@@ -162,6 +162,7 @@ class Draftee_mcp
 			foreach ($query->result() as $row)
 			{
 				$data = (array) $row;
+                $draft_id = $data['entry_id'];
 
 				$data['title'] = str_replace('[DRAFT] ', '', $data['title']);
 
@@ -186,6 +187,8 @@ class Draftee_mcp
 
 				$this->EE->api_channel_entries->update_entry($parent_id, $data);
 
+                // update the matrix data
+                $this->update_matrix_data($parent_id, $draft_id);
 			}
 		}
 
@@ -220,6 +223,31 @@ class Draftee_mcp
 		$resp['msg'] = 'entry_updated';
 		$this->EE->output->send_ajax_response($resp);
 	}
+
+    function update_matrix_data($original_entry, $draft_entry)
+    {
+        // Delete the matrix data of the original entry
+        $this->EE->db->where_in('entry_id', $original_entry);
+        $this->EE->db->delete('matrix_data');
+
+        $this->EE->db->select('*');
+        $this->EE->db->from('matrix_data');
+        $this->EE->db->where('entry_id', $draft_entry);
+        $this->EE->db->order_by('row_id', "asc");
+        $matrixes = $this->EE->db->get();
+
+        // Insert back the matrix data if they are present in the draft
+        if ($matrixes->num_rows() > 0) {
+            foreach ($matrixes->result() as $matrix)
+            {
+                $data = (array) $matrix;
+                unset($data['row_id']);
+                $data['entry_id'] = $draft_entry;
+                $this->EE->db->insert('matrix_data', $data);
+            }
+        }
+    }
+
 
 
 	function index()
