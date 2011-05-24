@@ -168,7 +168,7 @@ class Draftee_mcp
 
 				// get rid of a bunch of stuff that is outside of draftee jurisdiction
 				unset($data['entry_id']);
-				//unset($data['author_id']);
+				//unset($data['author_id']); // uncomment to preserve the group author
 				unset($data['status']);
 				unset($data['view_count_one']);
 				unset($data['view_count_two']);
@@ -215,8 +215,13 @@ class Draftee_mcp
             );
 
             $this->EE->db->where_in('entry_id', $update_ids);
-			$this->EE->db->update('channel_titles', $data);
+			//$this->EE->db->update('channel_titles', $data);
+            // Delete the draft entry cos it really clustering up the views
+            $this->EE->db->delete('channel_titles');
 
+            // Delete the draft entry's matrix data - house cleaning
+            $this->EE->db->where_in('entry_id', $update_ids);
+            $this->EE->db->delete('matrix_data');
 		}
 
 
