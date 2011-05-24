@@ -99,6 +99,23 @@ class Draftee_mcp
 		            );
 		            $this->EE->db->insert('draftee_drafts', $key_data);
 
+                    // Matrix data support
+                    // Duplicate another set of matrix data for the draft
+                    $this->EE->db->select('*');
+                    $this->EE->db->from('matrix_data');
+                    $this->EE->db->where('entry_id', $entry_id);
+                    $this->EE->db->order_by('row_id', "asc");
+                    $matrixes = $this->EE->db->get();
+                    if ($matrixes->num_rows() > 0) {
+                        foreach ($matrixes->result() as $matrix)
+                        {
+                            $data = (array) $matrix;
+                            unset($data['row_id']);
+                            $data['entry_id'] = $resp['draft_entry_id'];
+                            $this->EE->db->insert('matrix_data', $data);
+                        }
+                    }
+
 					// and we're away!
 					$this->EE->output->send_ajax_response($resp);
 				}
