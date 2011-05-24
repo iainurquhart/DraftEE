@@ -168,7 +168,7 @@ class Draftee_mcp
 
 				// get rid of a bunch of stuff that is outside of draftee jurisdiction
 				unset($data['entry_id']);
-				unset($data['author_id']);
+				//unset($data['author_id']);
 				unset($data['status']);
 				unset($data['view_count_one']);
 				unset($data['view_count_two']);
