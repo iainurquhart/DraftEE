@@ -1,3 +1,7 @@
+<?php // Ugly hard code to make sure EDITOR group can't publish draft ?>
+<?php define('EDITOR_GROUP_ID', 7); //change the id to your corresponding Editor group id ?>
+
+
 <link type="text/css" href="<?=$theme_base?>css/draftee.css" rel="stylesheet" />
 <script type="text/javascript" src="<?=$theme_base?>js/draftee.js"></script>
 
@@ -87,8 +91,12 @@ $(document).ready(function() {
 			<?php if($date_mismatch){ ?>
 				<p class="draftee_warning"><strong>Note:</strong> The parent has been edited since this draft was created<br />Publishing this draft will overwrite any changes made.</p>
 			<?php } ?>
+
+            <?php // Ugly hard code to make sure EDITOR group can't publish draft ?>
+            <?php if ($group_id != EDITOR_GROUP_ID) : ?>
 			<span class="draftee_publish_draft draftee_button">Publish Draft</span> 		
 			<span id="draftee_close_other_drafts"><input type="checkbox" id="close_drafts" value="1" /> Close all other drafts</span>
+            <?php endif;?>
 		</div>
 		
 	</div>
