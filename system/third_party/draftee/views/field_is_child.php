@@ -1,7 +1,3 @@
-<?php // Ugly hard code to make sure EDITOR group can't publish draft ?>
-<?php define('EDITOR_GROUP_ID', 7); //change the id to your corresponding Editor group id ?>
-
-
 <link type="text/css" href="<?=$theme_base?>css/draftee.css" rel="stylesheet" />
 <script type="text/javascript" src="<?=$theme_base?>js/draftee.js"></script>
 
@@ -56,7 +52,8 @@ $(document).ready(function() {
                     // was it all good?
                     if(msg = 'entry_updated')
                     {
-                    	$('span.draftee_button').removeClass('draftee_update_underway').removeClass('draftee_publish_draft').addClass('draftee_publish_done').html('Done!');
+                    	$('span.draftee_button').removeClass('draftee_update_underway').removeClass('draftee_publish_draft').addClass('draftee_publish_done').html(
+				'<a href="<?=$publish_base?>entry_id=<?=$parent_id?>&amp;channel_id=<?=$channel_id?>">Done!</a>');
                     	$('#draftee_close_other_drafts').fadeOut();
                     }
                     // buggers...
@@ -93,7 +90,7 @@ $(document).ready(function() {
 			<?php } ?>
 
             <?php // Ugly hard code to make sure EDITOR group can't publish draft ?>
-            <?php if ($group_id != EDITOR_GROUP_ID) : ?>
+            <?php if (in_array($group_id, $settings['publishers'])) : ?>
 			<span class="draftee_publish_draft draftee_button">Publish Draft</span> 		
 			<span id="draftee_close_other_drafts"><input type="checkbox" id="close_drafts" value="1" /> Close all other drafts</span>
             <?php endif;?>

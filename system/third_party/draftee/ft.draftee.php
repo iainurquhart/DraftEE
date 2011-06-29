@@ -15,7 +15,7 @@
 	{
 		var $info = array(
 			'name'		=> 'Draftee',
-			'version'	=> '0.001'
+			'version'	=> '0.002'
 		);
 
 		public function Draftee_ft()
@@ -39,7 +39,8 @@
 			$vars['channel_id'] = $this->EE->input->get('channel_id');
 			$vars['field_id'] = $this->field_id;
 			$vars['theme_base'] = $this->theme_base;
-            $vars['group_id'] = $this->EE->session->userdata('group_id');
+			$vars['group_id'] = $this->EE->session->userdata('group_id');
+			$vars['settings'] = $this->settings;
 			
 			// no entry id
 			// we just hide the whole field for now.
@@ -190,13 +191,13 @@
 			}
 			
 			$tree_id = array(
-              'name'        => 'tree_id',
-              'id'          => 'tree_id',
-              'value'       => $data['tree_id'],
-              'maxlength'   => '100',
-              'size'        => '50',
-              'style'       => 'width:50%',
-            );
+				'name'        => 'tree_id',
+				'id'          => 'tree_id',
+				'value'       => $data['tree_id'],
+				'maxlength'   => '100',
+				'size'        => '50',
+				'style'       => 'width:50%',
+			);
 			
  			$this->EE->table->add_row(
  				$this->EE->lang->line('select_tree'),
@@ -205,8 +206,48 @@
  			
  		}			
 
+		function display_global_settings()
+		{
+			$this->EE->load->library('table');
+			$form 	= "";
+
+			$val = array_merge($this->settings, $_POST);
+
+			$this->EE->table->set_template(array(
+				'table_open'    => '<table class="mainTable padTable" border="0" cellspacing="0" cellpadding="0">',
+					'row_start'     => '<tr class="even">',
+					'row_alt_start' => '<tr class="odd">'
+			));
+			$this->EE->table->set_heading(
+					array('data' => 'Member Groups'),
+					array('data' => 'Permit Publishing')
+			);
+
+
+			$member_groups = $this->EE->member_model->get_member_groups();
+
+			$publishers=$this->settings['publishers'];
+			foreach($member_groups->result() as $group)
+			{
+				$member_group[$group->group_id] = $group->group_title;
+				$this->EE->table->add_row(
+					$group->group_title,
+					form_checkbox('publishers[]', $group->group_id, in_array($group->group_id, $publishers))
+				);
+			}
+			$form .= $this->EE->table->generate();
+			$this->EE->table->clear();	
+			return $form;
+		}
+
+		function save_global_settings()
+		{
+			return array_merge($this->settings, $_POST);
+		}
+
 		function install()
 		{
+			return array( 'publishers' => array(1));
 			//nothing
 		}
 
