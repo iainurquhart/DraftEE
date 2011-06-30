@@ -70,9 +70,11 @@ class Draftee_mcp
 			{
 
 				$data = (array) $row;
+				// Don't ditch the original entry_id, as otherwise we generate a bunch of 'Undefined index' php notices from submit_new_entry
+				// unset($data['entry_id']);
 
-				// ditch the entry_id for the insert
-				unset($data['entry_id']);
+				// Neded to prevent an 'Undefined index' error
+				$data['revision_post']='';
 
 				// Get the channel_id from the entry, since we don't always know the channel_id when called
 				$channel_id = $data['channel_id'];
@@ -104,31 +106,31 @@ class Draftee_mcp
 					// log the draft into draftee_drafts
 					$key_data = array(
 						'id' => NULL,
-		               	'parent_id' => $row->entry_id,
-		               	'parent_last_edit' => $row->edit_date,
-		               	'draft_id' => $resp['draft_entry_id'],
-		               	'pushed' => 0
-		            );
-		            $this->EE->db->insert('draftee_drafts', $key_data);
+						'parent_id' => $row->entry_id,
+						'parent_last_edit' => $row->edit_date,
+						'draft_id' => $resp['draft_entry_id'],
+						'pushed' => 0
+					);
+					$this->EE->db->insert('draftee_drafts', $key_data);
 
-                    if ($this->have_matrix == 1 ) {
-                        // Matrix data support
-                        // Duplicate another set of matrix data when creating a draft
-                        $this->EE->db->select('*');
-                        $this->EE->db->from('matrix_data');
-                        $this->EE->db->where('entry_id', $entry_id);
-                        $this->EE->db->order_by('row_id', "asc");
-                        $matrixes = $this->EE->db->get();
-                        if ($matrixes->num_rows() > 0) {
-                            foreach ($matrixes->result() as $matrix)
-                            {
-                                $data = (array) $matrix;
-                                unset($data['row_id']);
-                                $data['entry_id'] = $resp['draft_entry_id'];
-                                $this->EE->db->insert('matrix_data', $data);
-                            }
-                        }
-                    }
+					if ($this->have_matrix == 1 ) {
+						// Matrix data support
+						// Duplicate another set of matrix data when creating a draft
+						$this->EE->db->select('*');
+						$this->EE->db->from('matrix_data');
+						$this->EE->db->where('entry_id', $entry_id);
+						$this->EE->db->order_by('row_id', "asc");
+						$matrixes = $this->EE->db->get();
+						if ($matrixes->num_rows() > 0) {
+							foreach ($matrixes->result() as $matrix)
+							{
+								$data = (array) $matrix;
+								unset($data['row_id']);
+								$data['entry_id'] = $resp['draft_entry_id'];
+								$this->EE->db->insert('matrix_data', $data);
+							}
+						}
+					}
 					// and we're away!
 					$this->EE->output->send_ajax_response($resp);
 				}
