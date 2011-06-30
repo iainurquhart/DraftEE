@@ -35,12 +35,12 @@
 			
 			$vars = array();
 			
-			$vars['entry_id'] 	= $this->EE->input->get('entry_id');
+			$vars['entry_id']   = $this->EE->input->get('entry_id');
 			$vars['channel_id'] = $this->EE->input->get('channel_id');
-			$vars['field_id'] = $this->field_id;
+			$vars['field_id']   = $this->field_id;
 			$vars['theme_base'] = $this->theme_base;
-			$vars['group_id'] = $this->EE->session->userdata('group_id');
-			$vars['settings'] = $this->settings;
+			$vars['group_id']   = $this->EE->session->userdata('group_id');
+			$vars['settings']   = $this->settings;
 			
 			// no entry id
 			// we just hide the whole field for now.
