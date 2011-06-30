@@ -5,7 +5,6 @@
 $(document).ready(function() {
 	$("span.draftee_create_draft").live('click', function() {
    			var this_entry_id = 'entry_id=<?=$entry_id?>';
-   			var this_channel_id = '&channel_id=<?=$channel_id?>';
    			
    			var publish_base = '<?=$publish_base?>'
    			$('span.draftee_button').addClass('draftee_update_underway');
@@ -14,7 +13,7 @@ $(document).ready(function() {
 	           
 	            url: "<?=$ajax_base?>create_draft",
 	            type: "GET",         
-	            data: this_entry_id + this_channel_id,       
+	            data: this_entry_id,       
 	            error: function () {                
 	                 alert('An error occurred!');                 
 	            }, 
@@ -31,7 +30,11 @@ $(document).ready(function() {
 	                    {
 	                    	$('ul#draftee_draft_list').slideUp();
 	                    	$('span.draftee_button').html('<a href="' + edit_url + '">Draft created! Click to edit</a>').addClass('bulkee_extended').removeClass('draftee_create_draft');
-	                    }	                    
+	                    } else {
+	                    	$('ul#draftee_draft_list').slideUp();
+	                    	$('span.draftee_button').html('<a href="' + edit_url + '">Draft error -- [' + msg + '] Click to edit</a>').addClass('bulkee_extended').removeClass('draftee_create_draft');
+
+			    }
 
 	            }         
 	        });

@@ -14,6 +14,7 @@ class Draftee_mcp
 	var $base;			// the base url for this module
 	var $form_base;		// base url for forms
 	var $module_name = "draftee";
+	var $have_matrix = 0;
 
     /**
      * @var Devkit_code_completion
@@ -26,6 +27,15 @@ class Draftee_mcp
 		$this->EE =& get_instance();
 		$this->base	 	 = BASE.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->module_name;
 		$this->form_base = 'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->module_name;
+                // Check to see if we have the matrix module installed:
+                $this->EE->db->select('*');
+                $this->EE->db->from('modules');
+                $this->EE->db->where('module_name', 'Matrix');
+                $matrix = $this->EE->db->get();
+                if ($matrix->num_rows() > 0) {
+                    $have_matrix=1;
+                }
+
 
         // uncomment this if you want navigation buttons at the top
 /*		$this->EE->cp->set_right_nav(array(
@@ -39,7 +49,6 @@ class Draftee_mcp
 	function create_draft()
 	{
 		$entry_id = $this->EE->input->get('entry_id');
-		$channel_id = $this->EE->input->get('channel_id');
 
 		// go get all the entry data for this entry.
 		$this->EE->db->select('*');
@@ -61,9 +70,14 @@ class Draftee_mcp
 			{
 
 				$data = (array) $row;
+				// Don't ditch the original entry_id, as otherwise we generate a bunch of 'Undefined index' php notices from submit_new_entry
+				// unset($data['entry_id']);
 
-				// ditch the entry_id for the insert
-				unset($data['entry_id']);
+				// Neded to prevent an 'Undefined index' error
+				$data['revision_post']='';
+
+				// Get the channel_id from the entry, since we don't always know the channel_id when called
+				$channel_id = $data['channel_id'];
 
 				// prefix with [DRAFT], if it doesn't already :) one day I'll learn regex
 				$data['title'] = str_replace('[DRAFT] ', '', $data['title']);
@@ -87,35 +101,36 @@ class Draftee_mcp
 					$resp['msg'] = 'entry_created';
 					// get the entry id from the submit_new_entry
 					$resp['draft_entry_id'] = $this->EE->api_channel_entries->entry_id;
-					$resp['draft_channel_id'] = 1;
+					$resp['draft_channel_id'] = $this->EE->api_channel_entries->channel_id;
 
 					// log the draft into draftee_drafts
 					$key_data = array(
 						'id' => NULL,
-		               	'parent_id' => $row->entry_id,
-		               	'parent_last_edit' => $row->edit_date,
-		               	'draft_id' => $resp['draft_entry_id'],
-		               	'pushed' => 0
-		            );
-		            $this->EE->db->insert('draftee_drafts', $key_data);
+						'parent_id' => $row->entry_id,
+						'parent_last_edit' => $row->edit_date,
+						'draft_id' => $resp['draft_entry_id'],
+						'pushed' => 0
+					);
+					$this->EE->db->insert('draftee_drafts', $key_data);
 
-                    // Matrix data support
-                    // Duplicate another set of matrix data when creating a draft
-                    $this->EE->db->select('*');
-                    $this->EE->db->from('matrix_data');
-                    $this->EE->db->where('entry_id', $entry_id);
-                    $this->EE->db->order_by('row_id', "asc");
-                    $matrixes = $this->EE->db->get();
-                    if ($matrixes->num_rows() > 0) {
-                        foreach ($matrixes->result() as $matrix)
-                        {
-                            $data = (array) $matrix;
-                            unset($data['row_id']);
-                            $data['entry_id'] = $resp['draft_entry_id'];
-                            $this->EE->db->insert('matrix_data', $data);
-                        }
-                    }
-
+					if ($this->have_matrix == 1 ) {
+						// Matrix data support
+						// Duplicate another set of matrix data when creating a draft
+						$this->EE->db->select('*');
+						$this->EE->db->from('matrix_data');
+						$this->EE->db->where('entry_id', $entry_id);
+						$this->EE->db->order_by('row_id', "asc");
+						$matrixes = $this->EE->db->get();
+						if ($matrixes->num_rows() > 0) {
+							foreach ($matrixes->result() as $matrix)
+							{
+								$data = (array) $matrix;
+								unset($data['row_id']);
+								$data['entry_id'] = $resp['draft_entry_id'];
+								$this->EE->db->insert('matrix_data', $data);
+							}
+						}
+					}
 					// and we're away!
 					$this->EE->output->send_ajax_response($resp);
 				}
@@ -133,14 +148,14 @@ class Draftee_mcp
 	function publish_draft()
 	{
 
-		$entry_id 		= $this->EE->input->get('entry_id');
+		$entry_id 	= $this->EE->input->get('entry_id');
 		$channel_id 	= $this->EE->input->get('channel_id');
-		$parent_id 		= $this->EE->input->get('parent_id');
+		$parent_id 	= $this->EE->input->get('parent_id');
 		$close_drafts 	= $this->EE->input->get('close_drafts');
 
 		if(!$entry_id || !$channel_id || !$parent_id)
 		{
-			$resp['msg'] = 'error';
+			$resp['msg'] = 'error, missing entry_id, or channel_id, or parent_id';
 			$this->EE->output->send_ajax_response($resp);
 		}
 
@@ -154,7 +169,6 @@ class Draftee_mcp
 		// right, have we got the info
 		if ($query->num_rows() > 0)
 		{
-
 			// prep the api lib
 			$this->EE->load->library('api');
 			$this->EE->api->instantiate('channel_entries');
@@ -162,7 +176,7 @@ class Draftee_mcp
 			foreach ($query->result() as $row)
 			{
 				$data = (array) $row;
-                $draft_id = $data['entry_id'];
+				$draft_id = $data['entry_id'];
 
 				$data['title'] = str_replace('[DRAFT] ', '', $data['title']);
 
@@ -174,21 +188,26 @@ class Draftee_mcp
 				unset($data['view_count_two']);
 				unset($data['view_count_three']);
 				unset($data['view_count_four']);
-			    unset($data['dst_enabled']);
-			    unset($data['year']);
-			    unset($data['month']);
-			    unset($data['day']);
-			    unset($data['url_title']);
-			    unset($data['recent_comment_date']);
-			    unset($data['comment_total']);
+				unset($data['dst_enabled']);
+				unset($data['year']);
+				unset($data['month']);
+				unset($data['day']);
+				unset($data['url_title']);
+				unset($data['recent_comment_date']);
+				unset($data['comment_total']);
 				unset($data['versioning_enabled']);
 
 				// print_r($data);
 
+//				if($draftee->OverrideEntryStatus == 1) {
+					$data['status']='open';
+//				}
 				$this->EE->api_channel_entries->update_entry($parent_id, $data);
 
-                // update the matrix data
-                $this->update_matrix_data($parent_id, $draft_id);
+				if($this->have_matrix == 1) {
+					// update the matrix data
+					$this->update_matrix_data($parent_id, $draft_id);
+				}
 			}
 		}
 
@@ -207,21 +226,26 @@ class Draftee_mcp
 					$update_ids[] = $row->draft_id;
 				}
 			}
+			// Delete the entries from draftee_drafts
+			$this->EE->db->where('parent_id', $parent_id);
+			$this->EE->db->delete('draftee_drafts');
 
 			// print_r($update_ids);
 
-            $data = array(
-               'status' => 'closed'
-            );
+			$data = array(
+				'status' => 'closed'
+			);
 
-            $this->EE->db->where_in('entry_id', $update_ids);
+			$this->EE->db->where_in('entry_id', $update_ids);
 			//$this->EE->db->update('channel_titles', $data);
-            // Delete the draft entry cos it really clustering up the views
-            $this->EE->db->delete('channel_titles');
+			// Delete the draft entry cos it really clustering up the views
+			$this->EE->db->delete('channel_titles');
 
-            // Delete the draft entry's matrix data - house cleaning
-            $this->EE->db->where_in('entry_id', $update_ids);
-            $this->EE->db->delete('matrix_data');
+			if($this->have_matrix == 1) {
+				// Delete the draft entry's matrix data - house cleaning
+				$this->EE->db->where_in('entry_id', $update_ids);
+				$this->EE->db->delete('matrix_data');
+			}
 		}
 
 
